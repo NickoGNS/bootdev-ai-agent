@@ -1,15 +1,34 @@
 import os
 import argparse
+from time import sleep
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-
+from google.genai.errors import ServerError
+from prompts import system_prompt
+from call_function import available_functions
 
 def generate_content(client, messages, verbose):
-    res = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=messages,
-    )
+    err, res = None, None
+    attempts = 5
+    for attempt in range(attempts):
+        try:
+            res = client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=messages,
+                config=types.GenerateContentConfig(
+                    tools=[available_functions], system_instruction=system_prompt
+                ),
+            )
+            if res:
+                break
+        except Exception as e:
+            err = e
+        if attempt < attempts - 1:
+            sleep(3)
+
+    if err:
+        raise RuntimeError(f"Something went wrong while requesting Gemini: {err}")
 
     if not res.usage_metadata:
         raise RuntimeError("Something went wrong while returning Gemini usage metadata")
