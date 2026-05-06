@@ -6,7 +6,7 @@ from google import genai
 from google.genai import types
 from google.genai.errors import ServerError
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 def generate_content(client, messages, verbose):
     err, res = None, None
@@ -37,8 +37,13 @@ def generate_content(client, messages, verbose):
         print("Prompt tokens:", res.usage_metadata.prompt_token_count)
         print("Response tokens:", res.usage_metadata.candidates_token_count)
 
-    print("Response:")
-    print(res.text)
+    if res.function_calls:
+        for func in res.function_calls:
+            print(f"Calling function: {func.name}({func.args})")
+            call_function(func, verbose)
+    else:
+        print("Response:")
+        print(res.text)
 
 
 load_dotenv()
