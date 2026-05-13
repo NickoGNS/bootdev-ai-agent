@@ -1,8 +1,8 @@
 from google.genai import types
-from functions.get_files_info import schema_get_files_info
-from functions.get_file_content import schema_get_file_content
-from functions.run_python_file import schema_run_python_file
-from functions.write_file import schema_write_file
+from functions.get_files_info import schema_get_files_info, get_files_info
+from functions.get_file_content import schema_get_file_content, get_file_content
+from functions.run_python_file import schema_run_python_file, run_python_file
+from functions.write_file import schema_write_file, write_file
 
 available_functions = types.Tool(
     function_declarations=[
@@ -28,21 +28,21 @@ def call_function(function_call, verbose=False):
         }
 
         func_name = function_call.name or ""
-        func = function_map[func_name]
+        func = function_map.get(func_name)
         if func is None:
             return types.Content(
                 role="tool",
                 parts=[
                     types.Part.from_function_response(
-                        name=function_name,
-                        response={"error": f"Unknown function: {function_name}"},
+                        name=func_name,
+                        response={"error": f"Unknown function: {func_name}"},
                     )
                 ],
             )
 
         args = dict(function_call.args) if function_call.args else {}
 
-        args["working_directory"] = "./calculator"
+        args["working_dir"] = "./calculator"
 
         func_res = func(**args)
 
@@ -57,4 +57,13 @@ def call_function(function_call, verbose=False):
         )
 
     except Exception as err:
-        return f"Error: {err}"
+        func_name = function_call.name or "unknown"
+        return types.Content(
+            role="tool",
+            parts=[
+                types.Part.from_function_response(
+                    name=func_name,
+                    response={"error": str(err)},
+                )
+            ],
+        )
