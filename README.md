@@ -4,4 +4,4 @@ This is a Boot.dev guided project, about building an AI agent.
 
 Built with Python using Gemini SDK.
 
-This is a toy agent for educational purposes and should be not used as-is!
+This is a toy agent for educational purposes and should not be used as-is!
